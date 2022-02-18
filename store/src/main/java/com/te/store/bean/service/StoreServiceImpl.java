@@ -79,55 +79,63 @@ public class StoreServiceImpl implements StoreService {
 	@Override
 	public Object getByOption(String option) {
 
-		List<Store> list2 = new ArrayList<Store>();
+		if (option != null || !option.isEmpty()) {
 
-		Map<String, String> mapping = new HashMap<String, String>();
-		mapping.put("Store Id", "storeid");
-		mapping.put("Post Code", "postcode");
-		mapping.put("City", "city");
-		mapping.put("Address", "address");
-		mapping.put("Opened Date", "openeddate");
+			List<Store> list2 = new ArrayList<Store>();
 
-		HeaderColumnNameTranslateMappingStrategy<Store> strategy = new HeaderColumnNameTranslateMappingStrategy<Store>();
-		strategy.setType(Store.class);
-		strategy.setColumnMapping(mapping);
+			Map<String, String> mapping = new HashMap<String, String>();
+			mapping.put("Store Id", "storeid");
+			mapping.put("Post Code", "postcode");
+			mapping.put("City", "city");
+			mapping.put("Address", "address");
+			mapping.put("Opened Date", "openeddate");
 
-		CSVReader csvReader = null;
-		try {
-			csvReader = new CSVReader(new FileReader("src/main/webapp/WEB-INF/views/stores.csv"));
-		} catch (FileNotFoundException e) {
+			HeaderColumnNameTranslateMappingStrategy<Store> strategy = new HeaderColumnNameTranslateMappingStrategy<Store>();
+			strategy.setType(Store.class);
+			strategy.setColumnMapping(mapping);
 
-			e.printStackTrace();
-		}
-		CsvToBean csvToBean = new CsvToBean();
-
-		List<Store> list = csvToBean.parse(strategy, csvReader);
-
-		for (Store store : list) {
-			Date date = null;
-
+			CSVReader csvReader = null;
 			try {
-				date = new SimpleDateFormat("dd/MM/yyyy").parse(store.getOpenedDate());
-				Date dat = new Date();
+				csvReader = new CSVReader(new FileReader("src/main/webapp/WEB-INF/views/stores.csv"));
+			} catch (FileNotFoundException e) {
 
-				long timediff = Math.abs(dat.getTime() - date.getTime());
-				long dif = TimeUnit.DAYS.convert(timediff, TimeUnit.MILLISECONDS);
-
-				store.setNumberOfDays(dif);
-			} catch (Exception e) {
-				// TODO: handle exceptions
+				e.printStackTrace();
 			}
-		}
+			CsvToBean csvToBean = new CsvToBean();
 
-		System.out.println(list);
-		if (option.equalsIgnoreCase("city")) {
-			list2 = list.stream().sorted((i, j) -> i.getCity().compareTo(j.getCity())).collect(Collectors.toList());
+			List<Store> list = csvToBean.parse(strategy, csvReader);
+
+			for (Store store : list) {
+				Date date = null;
+
+				try {
+					date = new SimpleDateFormat("dd/MM/yyyy").parse(store.getOpenedDate());
+					Date dat = new Date();
+
+					long timediff = Math.abs(dat.getTime() - date.getTime());
+					long dif = TimeUnit.DAYS.convert(timediff, TimeUnit.MILLISECONDS);
+
+					store.setNumberOfDays(dif);
+				} catch (Exception e) {
+					// TODO: handle exceptions
+				}
+			}
+
+			System.out.println(list);
+			if (option.equalsIgnoreCase("city")) {
+				list2 = list.stream().sorted((i, j) -> i.getCity().compareTo(j.getCity())).collect(Collectors.toList());
+				return list2;
+
+			} else if (option.equalsIgnoreCase("openedDate"))
+				list2 = list.stream().sorted((i, j) -> i.getOpenedDate().compareTo(j.getOpenedDate()))
+						.collect(Collectors.toList());
+			else {
+				throw new StoreException("please enter the valid option...");
+			}
+		
 			return list2;
-
-		} else if (option.equalsIgnoreCase("openedDate"))
-			list2 = list.stream().sorted((i, j) -> i.getOpenedDate().compareTo(j.getOpenedDate()))
-					.collect(Collectors.toList());
-		return list2;
-
+		}
+		
+		return option;
 	}
 }
