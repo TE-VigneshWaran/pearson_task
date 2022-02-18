@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -18,12 +17,13 @@ import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 import com.te.store.bean.Store;
+import com.te.store.exception.StoreException;
 
 @Service
 public class StoreServiceImpl implements StoreService {
 
 	@Override
-	public Object getAll(String storeId) {
+	public Object getById(String storeId) {
 		List<Store> list2 = new ArrayList<Store>();
 		Map<String, String> mapping = new HashMap<String, String>();
 		mapping.put("Store Id", "storeid");
@@ -37,7 +37,7 @@ public class StoreServiceImpl implements StoreService {
 		strategy.setColumnMapping(mapping);
 
 		CSVReader csvReader = null;
-		
+
 		try {
 			csvReader = new CSVReader(new FileReader("src/main/webapp/WEB-INF/views/stores.csv"));
 		} catch (FileNotFoundException e) {
@@ -46,7 +46,7 @@ public class StoreServiceImpl implements StoreService {
 		}
 		CsvToBean csvToBean = new CsvToBean();
 		List<Store> list = csvToBean.parse(strategy, csvReader);
-		
+		Store bean = null;
 		for (Store store : list) {
 			Date date = null;
 
@@ -61,24 +61,19 @@ public class StoreServiceImpl implements StoreService {
 			} catch (Exception e) {
 				// TODO: handle exceptions
 			}
-		}
-		
-		System.out.println(list);
-		for (int i = 0; i < list.size(); i++) {
-
-			if (list.get(i).getStoreId().equalsIgnoreCase(storeId)) {
-				list2.add(list.get(i));
-				System.out.println(storeId);
-				System.out.println(list.get(i).getStoreId());
-
-				System.out.println(list2);
-				return list2;
-
+			if (store.getStoreId().equals(storeId)) {
+				bean = store;
+			} else {
+				throw new StoreException("Please Enter Valid Id...");
 			}
-
+			if (bean != null || !storeId.isEmpty()) {
+				return bean;
+			} else {
+				throw new StoreException("id should not be null or empty...");
+			}
 		}
-		return list2;
 
+		return bean;
 	}
 
 	@Override
@@ -129,7 +124,7 @@ public class StoreServiceImpl implements StoreService {
 			list2 = list.stream().sorted((i, j) -> i.getCity().compareTo(j.getCity())).collect(Collectors.toList());
 			return list2;
 
-		} else if (option.equalsIgnoreCase("opened date"))
+		} else if (option.equalsIgnoreCase("openedDate"))
 			list2 = list.stream().sorted((i, j) -> i.getOpenedDate().compareTo(j.getOpenedDate()))
 					.collect(Collectors.toList());
 		return list2;
